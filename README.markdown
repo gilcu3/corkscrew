@@ -19,6 +19,7 @@ Corkscrew has been tested with the following HTTP proxies :
  * CacheFlow
  * JunkBuster
  * Apache mod_proxy
+ * Squid (basic and digest auth)
 
 Please email me if you get it working on other proxies or compile
 it elsewhere.
@@ -89,8 +90,12 @@ if you could include the following information :
 
 Who Am I?
 ---------
+Original author (site is no longer up, so currently I don't know any way of contacting him):
 My name is Pat Padgett.  I'm a dork.
 URL   : http://www.agroman.net/
 Email : agroman@agroman.net
 
 This has been a traumatized production.  http://www.trauma-inc.com/
+
+Maintainer:
+gilcu3 at gmail dot com
