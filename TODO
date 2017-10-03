@@ -6,6 +6,6 @@ Minor Tweaks :
   spending some time to work on this.
 
 Major Tweaks :
-* Add support for HTTP authentication.
+* Add support for HTTP authentication (digest is partially supported now).
 * Add support for WinGate proxies (uh, well... we'll see).
 
