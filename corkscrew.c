@@ -331,7 +331,7 @@ char *argv[];
 	int debug;
 	int nn;
 
-	debug = 1;
+	debug = 0;
 	port = 80;
 
 	if ((argc == 5) || (argc == 6)) {
