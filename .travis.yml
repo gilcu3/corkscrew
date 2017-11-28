@@ -1,0 +1,7 @@
+script: autoreconf --force --install && ./configure && make
+language: c
+addons:
+  apt:
+    packages:
+      - libevent-dev
+      - libevent-2.0
