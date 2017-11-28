@@ -10,7 +10,7 @@
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY, to the extent permitted by law; without
 # even the implied warranty of MERCHANTABILITY or FITNESS FOR A
-# PARTICULAR PURPOSE.
+# PARTICULAR PURPOSE. 
 
 @SET_MAKE@
 
@@ -107,6 +107,7 @@ PROGRAMS = $(bin_PROGRAMS)
 am_corkscrew_OBJECTS = corkscrew.$(OBJEXT) md5.$(OBJEXT)
 corkscrew_OBJECTS = $(am_corkscrew_OBJECTS)
 corkscrew_LDADD = $(LDADD)
+corkscrew_DEPENDENCIES =
 AM_V_P = $(am__v_P_@AM_V@)
 am__v_P_ = $(am__v_P_@AM_DEFAULT_V@)
 am__v_P_0 = false
@@ -282,7 +283,7 @@ top_srcdir = @top_srcdir@
 AUTOMAKE_OPTIONS = no-dependencies
 AM_CPPFLAGS = -I$(srcdir)
 corkscrew_SOURCES = corkscrew.c md5.c
-AM_LDFLAGS = -levent
+LDADD = -levent 
 all: config.h
 	$(MAKE) $(AM_MAKEFLAGS) all-am
 

@@ -1,0 +1,8 @@
+script: cmake . && cmake --build .
+language: c
+addons:
+  apt:
+    packages:
+      - libevent-dev
+      - libevent-2.0
+      - cmake
