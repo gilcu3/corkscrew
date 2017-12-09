@@ -419,35 +419,7 @@ char *argv[];
 						}
 						if (code == 407) {
 							
-							if(strstr(buffer, "Basic realm") != NULL){
-								if(debug & 1)fprintf(stderr, "DEBUG: Basic auth needed\n");
-								strncpy(uri, "CONNECT ", sizeof(uri));
-								strncat(uri, desthost, sizeof(uri) - strlen(uri) - 1);
-								strncat(uri, ":", sizeof(uri) - strlen(uri) - 1);
-								strncat(uri, destport, sizeof(uri) - strlen(uri) - 1);
-								strncat(uri, " HTTP/1.0", sizeof(uri) - strlen(uri) - 1);
-								if ((argc == 6) || (argc == 7)) {
-									strncat(uri, "\nProxy-Authorization: Basic ", sizeof(uri) - strlen(uri) - 1);
-									strncat(uri, base64_encode(up), sizeof(uri) - strlen(uri) - 1);
-								}
-								else{
-									fprintf(stderr, "Error: User and password missing\n");
-									exit(-1);
-								}
-								strncat(uri, linefeed, sizeof(uri) - strlen(uri) - 1);
-								csock = sock_connect(host, port);
-								if(csock == -1) {
-									fprintf(stderr, "Error: Couldn't establish connection to proxy: %s\n", strerror(errno));
-									exit(-1);
-								}
-								
-								
-								
-								sent = 0;
-								continue;
-								
-							}
-							else if(strstr(buffer, "Digest realm") != NULL){
+							if(strstr(buffer, "Digest realm") != NULL){
 								if(debug & 1)fprintf(stderr, "DEBUG: Digest auth needed\n");
 								proxyauth* pa = get_param(buffer);
 								if(pa == NULL){
@@ -528,6 +500,34 @@ char *argv[];
 								}
 								sent = 0;
 								if(debug & 1)fprintf(stderr, "DEBUG: done\n");
+								continue;
+								
+							}
+							else if(strstr(buffer, "Basic realm") != NULL){
+								if(debug & 1)fprintf(stderr, "DEBUG: Basic auth needed\n");
+								strncpy(uri, "CONNECT ", sizeof(uri));
+								strncat(uri, desthost, sizeof(uri) - strlen(uri) - 1);
+								strncat(uri, ":", sizeof(uri) - strlen(uri) - 1);
+								strncat(uri, destport, sizeof(uri) - strlen(uri) - 1);
+								strncat(uri, " HTTP/1.0", sizeof(uri) - strlen(uri) - 1);
+								if ((argc == 6) || (argc == 7)) {
+									strncat(uri, "\nProxy-Authorization: Basic ", sizeof(uri) - strlen(uri) - 1);
+									strncat(uri, base64_encode(up), sizeof(uri) - strlen(uri) - 1);
+								}
+								else{
+									fprintf(stderr, "Error: User and password missing\n");
+									exit(-1);
+								}
+								strncat(uri, linefeed, sizeof(uri) - strlen(uri) - 1);
+								csock = sock_connect(host, port);
+								if(csock == -1) {
+									fprintf(stderr, "Error: Couldn't establish connection to proxy: %s\n", strerror(errno));
+									exit(-1);
+								}
+								
+								
+								
+								sent = 0;
 								continue;
 								
 							}
