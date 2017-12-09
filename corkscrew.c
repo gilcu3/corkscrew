@@ -254,7 +254,7 @@ char* digest_authentication_encode(char* user, char* realm, char* passwd, char *
 
 
 	char *res = (char*)malloc(len);
-	sprintf(res, "username=\"%s\", realm=\"%s\", nonce=\"%s\", uri=\"%s\", response=\"%s\", qop=%s, nc=%s, cnonce=\"%s\"",
+	sprintf(res, "username=\"%s\", realm=\"%s\", nonce=\"%s\", uri=\"%s\", response=\"%s\", qop=\"%s\", nc=%s, cnonce=\"%s\"",
 			user, realm, nonce, path, response, qop, nc, cnonce);
 	
 
@@ -275,11 +275,16 @@ typedef struct proxyauth{
 proxyauth* process_line(char* line){
 	
 	proxyauth* pa = (proxyauth *)malloc(sizeof(proxyauth));
-	// for now only looking for nonce and realm
-	char* where = strstr(line, "nonce");
+	// for now only looking for nonce, realm and qop
+	char* where = strstr(line, "nonce=");
 	if(where != NULL)strncpy(pa->nonce, where + 7, 32);
-	where = strstr(line, "realm");
+	where = strstr(line, "realm=");
 	if(where != NULL)sscanf(where + 7, "%[^\"]", pa->realm);
+	where = strstr(line, "qop=");
+	if(where != NULL)sscanf(where + 5, "%[^\"]", pa->qop);
+	// only auth parameter is recognized
+	if(strstr(pa->qop, "auth") == NULL)pa->qop[0] = '\0'; 
+	else strncpy(pa->qop, "auth", 5);
 	return pa;
 }
 
@@ -465,27 +470,42 @@ char *argv[];
 									char passwd[256] = "";
 									sscanf(up + strlen(user) + 1, "%s", passwd);
 									char method[32] = "CONNECT";
+									char uri_path[32] = "/";
+									
 									strncat(uri, "\nProxy-Authorization: Digest ", sizeof(uri) - strlen(uri) - 1);
 									
+									char* auth_string;
 									
-									/* prepare an random string for cnounce */
-									char cnonce[17];
-									snprintf(cnonce, sizeof(cnonce), "%08x%08x", red_randui32(), red_randui32());
-									
-									if(strncmp(prev_nonce, pa->nonce, 32) == 0)nc++;
-									else{
-										strncpy(prev_nonce, pa->nonce, 32);
-										nc = 1;
+									if(strncmp(pa->qop, "auth", 5) == 0){
+										/* prepare an random string for cnounce */
+										char cnonce[17];
+										snprintf(cnonce, sizeof(cnonce), "%08x%08x", red_randui32(), red_randui32());
+										
+										if(strncmp(prev_nonce, pa->nonce, 32) == 0)nc++;
+										else{
+											strncpy(prev_nonce, pa->nonce, 32);
+											nc = 1;
+										}
+										char str_nc[17];
+										snprintf(str_nc, sizeof(str_nc), "%08x", nc);
+										
+										
+										
+										
+										auth_string = digest_authentication_encode(
+												user, pa->realm, passwd, //user, realm, pass
+												method, uri_path, str_nc, pa->nonce, cnonce, pa->qop); // method, path, nc, cnonce, qop (for now fixed)
+											
 									}
-									char str_nc[17];
-									snprintf(str_nc, sizeof(str_nc), "%08x", nc);
+									else{
+										auth_string = digest_authentication_encode(
+												user, pa->realm, passwd, //user, realm, pass
+												method, uri_path, NULL, pa->nonce, NULL, NULL); // method, path, nc, cnonce, qop (for now fixed)
+										
+									}
 									
 									
 									
-									
-									char* auth_string = digest_authentication_encode(
-											user, pa->realm, passwd, //user, realm, pass
-											method, "/", str_nc, pa->nonce, cnonce, "auth"); // method, path, nc, cnonce, qop (for now fixed)
 									
 									strncat(uri, auth_string, sizeof(uri) - strlen(uri) - 1);
 									
