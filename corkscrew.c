@@ -329,8 +329,10 @@ char *argv[];
 	FILE *fp;
 	char line[BUFSIZE];
 	int debug;
-	int nn;
-
+	int n_file_descriptor;
+	int nc = 1;
+	char prev_nonce[33] = "";
+	
 	debug = 0;
 	port = 80;
 
@@ -389,10 +391,10 @@ char *argv[];
 
 		tv.tv_sec = 5;
 		tv.tv_usec = 0;
-		nn = select(csock+1,&rfd,&sfd,NULL,&tv);
-		if(debug & 1)fprintf(stderr, "DEBUG: nn = %d\n", nn);
-		if(nn == 0)continue;
-		if(nn == -1) break;
+		n_file_descriptor = select(csock+1,&rfd,&sfd,NULL,&tv);
+		if(debug & 1)fprintf(stderr, "DEBUG: n_file_descriptor = %d\n", n_file_descriptor);
+		if(n_file_descriptor == 0)continue;
+		if(n_file_descriptor == -1) break;
 
 		/* there's probably a better way to do this */
 		if (setup == 0) {
@@ -404,6 +406,7 @@ char *argv[];
 				else {
 					sscanf(buffer,"%s%d%[^\n]",version,&code,descr);
 					if(debug & 1)fprintf(stderr, "DEBUG: version = %s code = %d\n", version, code);
+					//if(debug & 1)fprintf(stderr, "DEBUG: header = %s\n", buffer);
 					if ((strncmp(version,"HTTP/",5) == 0) && (code >= 200) && (code < 300))
 						setup = 1;
 					else {
@@ -469,15 +472,20 @@ char *argv[];
 									char cnonce[17];
 									snprintf(cnonce, sizeof(cnonce), "%08x%08x", red_randui32(), red_randui32());
 									
-									char nc[17];
-									snprintf(nc, sizeof(nc), "%08x", 1);
+									if(strncmp(prev_nonce, pa->nonce, 32) == 0)nc++;
+									else{
+										strncpy(prev_nonce, pa->nonce, 32);
+										nc = 1;
+									}
+									char str_nc[17];
+									snprintf(str_nc, sizeof(str_nc), "%08x", nc);
 									
 									
 									
 									
 									char* auth_string = digest_authentication_encode(
 											user, pa->realm, passwd, //user, realm, pass
-											method, "/", nc, pa->nonce, cnonce, "auth"); // method, path, nc, cnonce
+											method, "/", str_nc, pa->nonce, cnonce, "auth"); // method, path, nc, cnonce, qop (for now fixed)
 									
 									strncat(uri, auth_string, sizeof(uri) - strlen(uri) - 1);
 									
@@ -511,7 +519,7 @@ char *argv[];
 						}
 						
 						fprintf(stderr, "Error: Proxy could not open connnection to %s: %s\n", desthost, descr);
-						if(debug & 1)fprintf(stderr, "%s\n", buffer);
+						//if(debug & 1)fprintf(stderr, "%s\n", buffer);
 						exit(-1);
 		
 					}
@@ -522,8 +530,10 @@ char *argv[];
 				if(debug & 1)fprintf(stderr, "DEBUG: uri = %s\n", uri);
 				if (len <= 0)
 					break;
-				else
+				else{
+					if(debug & 1)fprintf(stderr, "DEBUG: sent uri\n");
 					sent = 1;
+				}
 			}
 		} else {
 			if(debug & 1)fprintf(stderr, "DEBUG: working\n");
