@@ -306,14 +306,17 @@ proxyauth * get_param(char * buffer){
 	return NULL;
 	
 }
-
+#define min(a, b) ((a) < (b) ? (a) : (b))
 char * header(char * buffer){
 	char * where = strstr(buffer, "\r\n\r\n");
-	if(where==NULL)return "";
+	int headlen = 2048;
+	char *head = (char*)malloc(2048);
+	memset(head, 0, headlen);
+	if(where==NULL){
+		return head;
+	}
 	else{
-		char *head = (char*)malloc(256);
-		strncat(head, buffer, where - buffer);
-		head[where - buffer] = '\0';
+		strncat(head, buffer, min(where - buffer, headlen - 1));
 		return head;
 	}
 }
@@ -426,7 +429,7 @@ char *argv[];
 		if (setup == 0) {
 			
 			if (FD_ISSET(csock, &rfd)) {
-				
+				memset(buffer, 0, sizeof(buffer));
 				len = read(csock, buffer, sizeof(buffer));
 				
 				if (len <= 0)	break;
@@ -520,6 +523,17 @@ char *argv[];
 								sent = 0;
 								if(debug & 1)fprintf(stderr, "DEBUG: done digest\n");
 								
+								if(strstr(buffer, "Connection: close") != NULL){
+									// necesary to open new socket, although the proxy should not do this
+									close(csock);
+									csock = sock_connect(host, port);
+									if(csock == -1) {
+										fprintf(stderr, "Error: Couldn't establish connection to proxy: %s\n", strerror(errno));
+										exit(-1);
+									}
+									reading = 0;
+								}
+								
 							}
 							else if(strstr(buffer, "Basic realm") != NULL){
 								if(debug & 1)fprintf(stderr, "DEBUG: Basic auth needed\n");
@@ -543,6 +557,14 @@ char *argv[];
 								strcat(uri, linefeed);
 								
 								sent = 0;
+								// just in case because old socket not needed, and old HTTP/1.0 proxies may not send Connection: close header
+								close(csock);
+								csock = sock_connect(host, port);
+								if(csock == -1) {
+									fprintf(stderr, "Error: Couldn't establish connection to proxy: %s\n", strerror(errno));
+									exit(-1);
+								}
+								reading = 0;
 							}
 							
 							else{
